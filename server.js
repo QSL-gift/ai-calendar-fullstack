@@ -199,6 +199,11 @@ app.get('/test', (req, res) => {
     res.sendFile(path.join(__dirname, 'test.html'));
 });
 
+// 诊断页面路由
+app.get('/debug', (req, res) => {
+    res.sendFile(path.join(__dirname, 'debug.html'));
+});
+
 // 提供静态文件
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
