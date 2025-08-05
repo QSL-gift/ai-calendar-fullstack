@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Render部署诊断工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Render部署诊断工具</h1>
+        <p>这个工具将帮助您诊断AI日历助手在Render上的部署问题。</p>
+        
+        <div class="test-section info">
+            <h3>📍 当前环境信息</h3>
+            <p><strong>当前URL:</strong> <span id="current-url"></span></p>
+            <p><strong>主机名:</strong> <span id="hostname"></span></p>
+            <p><strong>协议:</strong> <span id="protocol"></span></p>
+            <p><strong>API基础URL:</strong> <span id="api-base-url"></span></p>
+        </div>
+
+        <div class="test-section" id="server-test">
+            <h3><span class="status-indicator" id="server-status"></span>1. 服务器连接测试</h3>
+            <button onclick="testServerConnection()">测试服务器连接</button>
+            <div id="server-result"></div>
+        </div>
+
+        <div class="test-section" id="health-test">
+            <h3><span class="status-indicator" id="health-status"></span>2. API健康检查</h3>
+            <button onclick="testHealthEndpoint()">检查API健康状态</button>
+            <div id="health-result"></div>
+        </div>
+
+        <div class="test-section" id="api-test">
+            <h3><span class="status-indicator" id="api-status"></span>3. AI API测试</h3>
+            <button onclick="testAIAPI()">测试AI解析功能</button>
+            <div id="api-result"></div>
+        </div>
+
+        <div class="test-section" id="external-test">
+            <h3><span class="status-indicator" id="external-status"></span>4. 外部API连接测试</h3>
+            <button onclick="testExternalAPI()">测试外部API连接</button>
+            <div id="external-result"></div>
+        </div>
+
+        <div class="test-section" id="env-test">
+            <h3><span class="status-indicator" id="env-status"></span>5. 环境变量检查</h3>
+            <button onclick="checkEnvironment()">检查环境配置</button>
+            <div id="env-result"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>🛠️ 常见问题解决方案</h3>
+            <ul>
+                <li><strong>API密钥未配置:</strong> 在Render控制台的Environment标签页添加SILICONFLOW_API_KEY</li>
+                <li><strong>服务器无响应:</strong> 检查Render服务是否正常运行，查看部署日志</li>
+                <li><strong>CORS错误:</strong> 确保服务器已正确配置CORS中间件</li>
+                <li><strong>路由不存在:</strong> 确保server.js包含所有必要的API端点</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 显示当前环境信息
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        
+        // 动态获取API基础URL
+        function getApiBaseUrl() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return window.location.origin;
+            }
+            return window.location.origin;
+        }
+        
+        document.getElementById('api-base-url').textContent = getApiBaseUrl();
+
+        function updateStatus(elementId, status) {
+            const indicator = document.getElementById(elementId);
+            indicator.className = 'status-indicator status-' + status;
+        }
+
+        function showResult(containerId, content, type = 'info') {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="${type}" style="margin-top: 10px; padding: 10px; border-radius: 5px;">${content}</div>`;
+        }
+
+        async function testServerConnection() {
+            updateStatus('server-status', 'warning');
+            showResult('server-result', '正在测试服务器连接...', 'info');
+            
+            try {
+                const response = await fetch('/', { method: 'HEAD' });
+                if (response.ok) {
+                    updateStatus('server-status', 'ok');
+                    showResult('server-result', '✅ 服务器连接正常', 'success');
+                } else {
+                    updateStatus('server-status', 'error');
+                    showResult('server-result', `❌ 服务器响应异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('server-status', 'error');
+                showResult('server-result', `❌ 服务器连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testHealthEndpoint() {
+            updateStatus('health-status', 'warning');
+            showResult('health-result', '正在检查API健康状态...', 'info');
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateStatus('health-status', 'ok');
+                    showResult('health-result', `
+                        <h4>✅ API健康检查通过</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    updateStatus('health-status', 'error');
+                    showResult('health-result', `❌ API健康检查失败: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('health-status', 'error');
+                showResult('health-result', `❌ 无法访问健康检查端点: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAIAPI() {
+            updateStatus('api-status', 'warning');
+            showResult('api-result', '正在测试AI解析功能...', 'info');
+            
+            try {
+                const response = await fetch('/api/parse-schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: '明天下午3点开会' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateStatus('api-status', 'ok');
+                    showResult('api-result', `
+                        <h4>✅ AI API测试成功</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    updateStatus('api-status', 'error');
+                    showResult('api-result', `
+                        <h4>❌ AI API测试失败</h4>
+                        <p>状态码: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                updateStatus('api-status', 'error');
+                showResult('api-result', `❌ AI API调用失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testExternalAPI() {
+            updateStatus('external-status', 'warning');
+            showResult('external-result', '正在测试外部API连接...', 'info');
+            
+            try {
+                const response = await fetch('/api/test-external');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    updateStatus('external-status', 'ok');
+                    showResult('external-result', `
+                        <h4>✅ 外部API连接正常</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    updateStatus('external-status', 'error');
+                    showResult('external-result', `
+                        <h4>❌ 外部API连接失败</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                updateStatus('external-status', 'error');
+                showResult('external-result', `❌ 无法测试外部API: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkEnvironment() {
+            updateStatus('env-status', 'warning');
+            showResult('env-result', '正在检查环境配置...', 'info');
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const hasApiKey = data.apiKeyConfigured;
+                    const environment = data.environment;
+                    
+                    if (hasApiKey) {
+                        updateStatus('env-status', 'ok');
+                        showResult('env-result', `
+                            <h4>✅ 环境配置正常</h4>
+                            <p><strong>环境:</strong> ${environment}</p>
+                            <p><strong>API密钥:</strong> 已配置</p>
+                        `, 'success');
+                    } else {
+                        updateStatus('env-status', 'error');
+                        showResult('env-result', `
+                            <h4>❌ 环境配置问题</h4>
+                            <p><strong>环境:</strong> ${environment}</p>
+                            <p><strong>API密钥:</strong> 未配置</p>
+                            <p><strong>解决方案:</strong> 在Render控制台添加SILICONFLOW_API_KEY环境变量</p>
+                        `, 'error');
+                    }
+                } else {
+                    updateStatus('env-status', 'error');
+                    showResult('env-result', '❌ 无法获取环境信息', 'error');
+                }
+            } catch (error) {
+                updateStatus('env-status', 'error');
+                showResult('env-result', `❌ 环境检查失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动运行基本测试
+        window.onload = function() {
+            setTimeout(() => {
+                testServerConnection();
+                setTimeout(() => testHealthEndpoint(), 1000);
+            }, 500);
+        };
+    </script>
+</body>
+</html>
