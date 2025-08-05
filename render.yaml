@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ai-calendar-fullstack
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SILICONFLOW_API_KEY
+        sync: false  # 这个需要在Render控制台手动设置
+      - key: SILICONFLOW_API_URL
+        value: https://api.siliconflow.cn/v1/chat/completions
+      - key: DEEPSEEK_MODEL
+        value: deepseek-ai/DeepSeek-V3
