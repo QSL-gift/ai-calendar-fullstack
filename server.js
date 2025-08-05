@@ -155,6 +155,101 @@ app.post('/api/parse-schedule', async (req, res) => {
     }
 });
 
+// 健康检查端点
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        nodeVersion: process.version,
+        environment: process.env.NODE_ENV || 'development',
+        apiConfigured: !!API_KEY,
+        apiUrl: API_URL,
+        model: MODEL,
+        port: PORT
+    });
+});
+
+// 测试外部API连接
+app.post('/api/test-external', async (req, res) => {
+    try {
+        console.log('开始测试外部API连接...');
+        
+        // 检查API密钥
+        if (!API_KEY) {
+            return res.status(500).json({
+                error: 'API密钥未配置',
+                details: 'SILICONFLOW_API_KEY 环境变量未设置'
+            });
+        }
+
+        // 测试简单的API调用
+        const testRequestBody = {
+            model: MODEL,
+            messages: [
+                {
+                    role: 'user',
+                    content: '测试连接，请回复"连接成功"'
+                }
+            ],
+            temperature: 0.1,
+            max_tokens: 50
+        };
+
+        console.log('发送测试请求到:', API_URL);
+        const startTime = Date.now();
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify(testRequestBody)
+        });
+
+        const responseTime = Date.now() - startTime;
+        console.log('外部API响应状态:', response.status);
+        console.log('响应时间:', responseTime, 'ms');
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('外部API错误:', errorText);
+            return res.status(response.status).json({
+                error: '外部API调用失败',
+                status: response.status,
+                statusText: response.statusText,
+                details: errorText,
+                responseTime: responseTime
+            });
+        }
+
+        const data = await response.json();
+        console.log('外部API响应成功');
+
+        res.json({
+            success: true,
+            message: '外部API连接正常',
+            responseTime: responseTime,
+            apiUrl: API_URL,
+            model: MODEL,
+            response: data.choices && data.choices[0] ? data.choices[0].message.content : '无响应内容'
+        });
+
+    } catch (error) {
+        console.error('外部API测试失败:', error);
+        res.status(500).json({
+            error: '外部API连接测试失败',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+// 测试页面路由
+app.get('/test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test.html'));
+});
+
 // 提供静态文件
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -163,5 +258,14 @@ app.get('/', (req, res) => {
 // 启动服务器
 app.listen(PORT, () => {
     console.log(`服务器运行在 http://localhost:${PORT}`);
+    console.log(`测试界面: http://localhost:${PORT}/test`);
     console.log('AI日历助手后端服务已启动');
+    
+    // 启动时检查配置
+    if (!API_KEY) {
+        console.warn('⚠️  警告: SILICONFLOW_API_KEY 环境变量未设置');
+        console.warn('   请创建 .env 文件并设置您的API密钥');
+    } else {
+        console.log('✅ API密钥已配置');
+    }
 });
