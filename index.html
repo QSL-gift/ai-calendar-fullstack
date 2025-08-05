@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 日历助手</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <aside class="chat-panel">
+            <header>
+                <h1>AI 日历助手</h1>
+                <p>请用自然语言告诉我您的日程安排</p>
+            </header>
+            <div id="chat-box" class="chat-box">
+                <div class="message ai">你好！有什么可以帮您安排的吗？例如："明天下午3点和王总开会，地点在公司会议室"</div>
+            </div>
+            <footer class="chat-input-area">
+                <form id="chat-form">
+                    <input type="text" id="user-input" placeholder="输入您的日程安排..." autocomplete="off" required>
+                    <button type="submit">发送</button>
+                </form>
+            </footer>
+        </aside>
+
+        <main class="calendar-panel">
+            <div class="calendar-container">
+                <div id="calendar"></div>
+            </div>
+            
+            <div class="todo-section">
+                <div class="todo-header">
+                    <h3>待办事项</h3>
+                    <div class="todo-stats">
+                        <span id="todo-completed">0</span> / <span id="todo-total">0</span> 已完成
+                    </div>
+                </div>
+                <div class="todo-list" id="todo-list">
+                    <div class="todo-empty">暂无待办事项</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>请确认日程信息</h2>
+            <form id="event-form">
+                <div class="form-group">
+                    <label for="event-title">事件</label>
+                    <input type="text" id="event-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-date">日期</label>
+                    <input type="date" id="event-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-time">时间</label>
+                    <input type="time" id="event-time" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-location">地点</label>
+                    <input type="text" id="event-location">
+                </div>
+                <div class="form-group">
+                    <label>紧急度</label>
+                    <div class="priority-group">
+                        <label><input type="radio" name="priority" value="low" checked> 低</label>
+                        <label><input type="radio" name="priority" value="medium"> 中</label>
+                        <label><input type="radio" name="priority" value="high"> 高</label>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button type="button" id="cancel-btn">取消</button>
+                    <button type="button" id="delete-btn" style="display: none; background-color: #dc3545;">删除</button>
+                    <button type="submit" id="confirm-btn">确认添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

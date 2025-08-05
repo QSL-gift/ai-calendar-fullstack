@@ -1,0 +1,343 @@
+/* 全局样式 */
+:root {
+    --primary-color: #007bff;
+    --bg-color: #f4f7f9;
+    --panel-bg: #ffffff;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+    --high-priority: #ff6b6b;
+    --medium-priority: #ffa94d;
+    --low-priority: #4dabf7;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 主布局 */
+.container {
+    display: flex;
+    width: 95vw;
+    height: 95vh;
+    background-color: var(--panel-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* 左侧聊天面板 */
+.chat-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+    min-width: 350px;
+}
+
+.chat-panel header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chat-panel h1 {
+    margin: 0 0 5px 0;
+    font-size: 1.5em;
+}
+
+.chat-panel p {
+    margin: 0;
+    color: #666;
+}
+
+.chat-box {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 85%;
+    line-height: 1.5;
+}
+
+.message.user {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom-right-radius: 4px;
+    margin-left: auto;
+}
+
+.message.ai {
+    background-color: #e9ecef;
+    color: var(--text-color);
+    border-bottom-left-radius: 4px;
+    margin-right: auto;
+}
+
+.chat-input-area {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+#chat-form {
+    display: flex;
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    margin-right: 10px;
+    font-size: 1em;
+}
+
+#chat-form button {
+    padding: 12px 20px;
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+/* 右侧日历面板 */
+.calendar-panel {
+    flex: 2.5;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* 日历容器 */
+.calendar-container {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+/* 待办事项模块 */
+.todo-section {
+    flex: 0 0 300px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+.todo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.todo-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: var(--text-color);
+}
+
+.todo-stats {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.todo-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.todo-item:last-child {
+    border-bottom: none;
+}
+
+.todo-item:hover {
+    background-color: #f0f0f0;
+}
+
+.todo-item.completed {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+}
+
+.todo-checkbox {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.todo-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.todo-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    transition: all 0.3s ease;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.todo-details {
+    font-size: 0.85em;
+    color: #666;
+    display: flex;
+    gap: 15px;
+}
+
+.todo-time {
+    font-weight: 500;
+}
+
+.todo-location {
+    color: #888;
+}
+
+.todo-priority {
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.todo-priority.high {
+    background-color: var(--high-priority);
+    color: white;
+}
+
+.todo-priority.medium {
+    background-color: var(--medium-priority);
+    color: white;
+}
+
+.todo-priority.low {
+    background-color: var(--low-priority);
+    color: white;
+}
+
+.todo-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-style: italic;
+}
+
+/* 日历事件颜色 */
+.fc-event.priority-high {
+    background-color: var(--high-priority);
+    border-color: var(--high-priority);
+}
+.fc-event.priority-medium {
+    background-color: var(--medium-priority);
+    border-color: var(--medium-priority);
+}
+.fc-event.priority-low {
+    background-color: var(--low-priority);
+    border-color: var(--low-priority);
+}
+
+/* 确认弹窗 Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none; /* 默认隐藏 */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="time"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.priority-group label {
+    margin-right: 15px;
+    font-weight: normal;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
+.button-group button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#confirm-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#cancel-btn {
+    background-color: #ccc;
+}
