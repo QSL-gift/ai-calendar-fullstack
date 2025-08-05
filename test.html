@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后端API测试界面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #28a745;
+        }
+        .status-offline {
+            background-color: #dc3545;
+        }
+        .status-unknown {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 后端API测试界面</h1>
+        
+        <!-- 服务器状态检查 -->
+        <div class="test-section">
+            <h3><span id="server-status" class="status-indicator status-unknown"></span>服务器连接状态</h3>
+            <p>检查后端服务器是否正常运行</p>
+            <button onclick="checkServerStatus()">检查服务器状态</button>
+            <div id="server-result" class="result info" style="display: none;"></div>
+        </div>
+
+        <!-- API端点测试 -->
+        <div class="test-section">
+            <h3>📡 API端点测试</h3>
+            <p>测试 /api/parse-schedule 端点是否可用</p>
+            <input type="text" id="test-input" placeholder="输入测试文本，例如：明天下午3点开会" value="明天下午3点开会">
+            <button onclick="testApiEndpoint()">测试API端点</button>
+            <div id="api-result" class="result info" style="display: none;"></div>
+        </div>
+
+        <!-- 环境变量检查 -->
+        <div class="test-section">
+            <h3>🔑 环境变量检查</h3>
+            <p>检查服务器环境变量配置（不会显示敏感信息）</p>
+            <button onclick="checkEnvironment()">检查环境变量</button>
+            <div id="env-result" class="result info" style="display: none;"></div>
+        </div>
+
+        <!-- 网络连接测试 -->
+        <div class="test-section">
+            <h3>🌐 外部API连接测试</h3>
+            <p>测试服务器到外部AI服务的连接</p>
+            <button onclick="testExternalConnection()">测试外部连接</button>
+            <div id="external-result" class="result info" style="display: none;"></div>
+        </div>
+
+        <!-- 完整诊断 -->
+        <div class="test-section">
+            <h3>🩺 完整系统诊断</h3>
+            <p>运行所有测试并生成诊断报告</p>
+            <button onclick="runFullDiagnostic()">运行完整诊断</button>
+            <div id="diagnostic-result" class="result info" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 获取当前服务器地址
+        const SERVER_URL = window.location.origin;
+        
+        // 显示结果的辅助函数
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+
+        // 更新服务器状态指示器
+        function updateServerStatus(online) {
+            const indicator = document.getElementById('server-status');
+            if (online === true) {
+                indicator.className = 'status-indicator status-online';
+            } else if (online === false) {
+                indicator.className = 'status-indicator status-offline';
+            } else {
+                indicator.className = 'status-indicator status-unknown';
+            }
+        }
+
+        // 检查服务器状态
+        async function checkServerStatus() {
+            showResult('server-result', '正在检查服务器状态...', 'loading');
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    updateServerStatus(true);
+                    showResult('server-result', 
+                        `✅ 服务器在线\n` +
+                        `状态码: ${response.status}\n` +
+                        `服务器地址: ${SERVER_URL}\n` +
+                        `响应时间: ${Date.now() - startTime}ms`, 
+                        'success'
+                    );
+                } else {
+                    updateServerStatus(false);
+                    showResult('server-result', 
+                        `❌ 服务器响应异常\n` +
+                        `状态码: ${response.status}\n` +
+                        `状态文本: ${response.statusText}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                updateServerStatus(false);
+                showResult('server-result', 
+                    `❌ 无法连接到服务器\n` +
+                    `错误: ${error.message}\n` +
+                    `服务器地址: ${SERVER_URL}\n` +
+                    `请检查服务器是否启动`, 
+                    'error'
+                );
+            }
+        }
+
+        // 测试API端点
+        async function testApiEndpoint() {
+            const testText = document.getElementById('test-input').value.trim();
+            if (!testText) {
+                showResult('api-result', '请输入测试文本', 'error');
+                return;
+            }
+
+            showResult('api-result', '正在测试API端点...', 'loading');
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/parse-schedule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: testText })
+                });
+
+                const responseTime = Date.now() - startTime;
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('api-result', 
+                        `✅ API端点正常\n` +
+                        `响应时间: ${responseTime}ms\n` +
+                        `响应数据:\n${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('api-result', 
+                        `❌ API端点错误\n` +
+                        `状态码: ${response.status}\n` +
+                        `错误信息:\n${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('api-result', 
+                    `❌ API请求失败\n` +
+                    `错误: ${error.message}\n` +
+                    `请检查网络连接和服务器状态`, 
+                    'error'
+                );
+            }
+        }
+
+        // 检查环境变量（创建一个新的端点来安全地检查）
+        async function checkEnvironment() {
+            showResult('env-result', '正在检查环境变量...', 'loading');
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/health`, {
+                    method: 'GET'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('env-result', 
+                        `✅ 环境检查完成\n` +
+                        `服务器时间: ${data.timestamp}\n` +
+                        `Node.js版本: ${data.nodeVersion}\n` +
+                        `环境: ${data.environment}\n` +
+                        `API配置: ${data.apiConfigured ? '已配置' : '未配置'}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('env-result', 
+                        `❌ 无法获取环境信息\n` +
+                        `状态码: ${response.status}\n` +
+                        `可能需要添加健康检查端点`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('env-result', 
+                    `❌ 环境检查失败\n` +
+                    `错误: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        // 测试外部连接
+        async function testExternalConnection() {
+            showResult('external-result', '正在测试外部API连接...', 'loading');
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/test-external`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('external-result', 
+                        `✅ 外部连接测试完成\n` +
+                        `结果:\n${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    const data = await response.json();
+                    showResult('external-result', 
+                        `❌ 外部连接测试失败\n` +
+                        `状态码: ${response.status}\n` +
+                        `错误信息:\n${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('external-result', 
+                    `❌ 外部连接测试失败\n` +
+                    `错误: ${error.message}\n` +
+                    `可能需要添加测试端点`, 
+                    'error'
+                );
+            }
+        }
+
+        // 运行完整诊断
+        async function runFullDiagnostic() {
+            showResult('diagnostic-result', '正在运行完整系统诊断...\n', 'loading');
+            
+            const results = [];
+            
+            // 测试1: 服务器状态
+            results.push('=== 服务器状态检查 ===');
+            try {
+                const response = await fetch(`${SERVER_URL}/`);
+                results.push(`✅ 服务器在线 (${response.status})`);
+            } catch (error) {
+                results.push(`❌ 服务器离线: ${error.message}`);
+            }
+            
+            // 测试2: API端点
+            results.push('\n=== API端点测试 ===');
+            try {
+                const response = await fetch(`${SERVER_URL}/api/parse-schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: '测试' })
+                });
+                results.push(`✅ API端点可访问 (${response.status})`);
+            } catch (error) {
+                results.push(`❌ API端点不可访问: ${error.message}`);
+            }
+            
+            // 测试3: 基本网络连接
+            results.push('\n=== 网络连接测试 ===');
+            try {
+                const response = await fetch('https://httpbin.org/get', { 
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                results.push(`✅ 外部网络连接正常`);
+            } catch (error) {
+                results.push(`❌ 外部网络连接异常: ${error.message}`);
+            }
+            
+            results.push('\n=== 诊断完成 ===');
+            results.push(`诊断时间: ${new Date().toLocaleString()}`);
+            results.push(`浏览器: ${navigator.userAgent}`);
+            
+            showResult('diagnostic-result', results.join('\n'), 'info');
+        }
+
+        // 页面加载时自动检查服务器状态
+        window.addEventListener('load', function() {
+            checkServerStatus();
+        });
+    </script>
+</body>
+</html>
