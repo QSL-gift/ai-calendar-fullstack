@@ -583,6 +583,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ---- 辅助函数 ----
 
+    // 自动检测API地址
+    function getApiUrl() {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const port = window.location.port;
+        
+        // 如果是本地开发环境
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return '/api/parse-schedule';
+        }
+        
+        // 如果是Render部署环境或其他生产环境
+        return '/api/parse-schedule';
+        
+        // 如果需要指定特定的外部地址，可以这样配置：
+        // return 'https://ai-calendar-fullstack.onrender.com/api/parse-schedule';
+    }
+
     // 添加消息到聊天框
     function addMessage(text, sender, isTyping = false) {
         const messageEl = document.createElement('div');
@@ -609,8 +627,12 @@ document.addEventListener('DOMContentLoaded', function() {
     async function mockApiCall(text) {
         console.log("调用DeepSeek API，输入:", text);
         
+        // 自动检测API地址
+        const apiUrl = getApiUrl();
+        console.log("使用API地址:", apiUrl);
+        
         try {
-            const response = await fetch('https://ai-calendar-fullstack.onrender.com/api/parse-schedule', {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
