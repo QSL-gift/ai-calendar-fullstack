@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("调用DeepSeek API，输入:", text);
         
         try {
-            const response = await fetch('/api/parse-schedule', {
+            const response = await fetch('https://ai-calendar-fullstack.onrender.com/api/parse-schedule', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
